@@ -1,399 +1,780 @@
 <!DOCTYPE html>
-<html lang="id"><head><meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<meta name="theme-color" content="#1E3A5F">
-<link rel="manifest" href="manifest.json"><link rel="icon" href="icon-192.png"><link rel="apple-touch-icon" href="icon-192.png">
-<title>JOY CORPORATION</title>
-<style>
-:root{--bg:#E8EDF0;--card:#fff;--ink:#1F2A33;--mut:#5d6b76;--navy:#1E3A5F;--brass:#B8892B;--line:#cdd6dc;--ok:#2f7d4f;--bad:#a83a3a}
-*{box-sizing:border-box}html,body{margin:0;height:100%}
-body{background:var(--bg);color:var(--ink);font:16px/1.5 system-ui,sans-serif;display:flex;flex-direction:column;padding-top:env(safe-area-inset-top)}
-h1,h2,h3{font-family:Georgia,serif;margin:0}
-header{background:var(--navy);color:#fff;padding:12px 16px}
-header h1{font-size:20px;letter-spacing:.5px}header small{color:#d8c28a;font-style:italic}
-main{flex:1;overflow-y:auto;padding:14px 14px 20px}
-nav{display:flex;background:var(--card);border-top:1px solid var(--line);padding-bottom:env(safe-area-inset-bottom)}
-nav button{flex:1;border:0;background:none;padding:12px 2px;font-size:13px;color:var(--mut)}
-nav button.on{color:var(--navy);font-weight:700;box-shadow:inset 0 3px 0 var(--brass)}
-.card{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:12px;margin-bottom:12px}
-input,textarea,select{width:100%;padding:10px;border:1px solid var(--line);border-radius:8px;font:inherit;background:#fff;color:var(--ink);margin:4px 0 8px}
-textarea{min-height:90px}
-.btn{background:var(--navy);color:#fff;border:0;border-radius:8px;padding:11px 14px;font:inherit;font-weight:600}
-.btn.alt{background:#fff;color:var(--navy);border:1px solid var(--navy)}
-.btn.sm{padding:6px 10px;font-size:13px}.btn:disabled{opacity:.5}
-.row{display:flex;gap:8px;flex-wrap:wrap}
-.chips{display:flex;gap:6px;overflow-x:auto;margin-bottom:10px}
-.chips button{white-space:nowrap;border:1px solid var(--navy);background:#fff;color:var(--navy);border-radius:20px;padding:6px 12px;font:inherit;font-size:14px}
-.chips button.on{background:var(--navy);color:#fff}
-.msg{white-space:pre-wrap;word-wrap:break-word;padding:10px 12px;border-radius:10px;margin:8px 0;max-width:94%}
-.msg.u{background:var(--navy);color:#fff;margin-left:auto}.msg.a{background:var(--card);border:1px solid var(--line)}
-.bar{height:12px;background:var(--line);border-radius:6px;overflow:hidden}.bar i{display:block;height:100%;background:var(--brass);width:0;transition:width .4s}
-.mut{color:var(--mut);font-size:14px}.pre{white-space:pre-wrap;word-wrap:break-word;font-size:15px}
-details{margin:6px 0}summary{font-weight:600;color:var(--navy)}
-.tag{display:inline-block;padding:2px 8px;border-radius:10px;font-size:12px;color:#fff;background:var(--mut)}.tag.ok{background:var(--ok)}.tag.bad{background:var(--bad)}.tag.quota{background:var(--brass)}.tag.model{background:var(--bad)}
-#lock{position:fixed;inset:0;background:var(--navy);color:#fff;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;z-index:9;padding:20px;text-align:center}
-#lock input{width:200px;text-align:center;font-size:24px;letter-spacing:8px}
-.err{color:var(--bad)}
-@media(prefers-reduced-motion:reduce){*{transition:none!important}}
-</style></head><body>
-<div id="lock"><h1>JOY CORPORATION</h1><small style="color:#d8c28a;font-style:italic">Kami ada karena kamu Ade</small>
-<input id="pin" type="password" inputmode="numeric" placeholder="PIN" autocomplete="off"><button class="btn" style="background:var(--brass)" id="go">Buka kantor</button><div id="lerr" class="err"></div></div>
-<header><h1>JOY CORPORATION</h1><small>Kami ada karena kamu Ade</small></header>
-<main id="m"></main>
-<nav id="nav"></nav>
+<html lang="id">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>JOY CORPORATION - Command Center</title>
+<script src="https://cdn.tailwindcss.com"></script>
 <script>
-const $=s=>document.querySelector(s);
-const el=(t,c,x)=>{const e=document.createElement(t);if(c)e.className=c;if(x!=null)e.textContent=x;return e};
-let S;try{S=JSON.parse(localStorage.getItem('jc'))||{}}catch(e){S={}}
-S.pin=S.pin||'1234';S.keys=S.keys||[];if(S.key){S.keys.push({id:Date.now(),pv:'gemini',key:S.key,model:S.model||'gemini-2.5-flash',st:'',msg:'',chk:''});S.active=S.keys[0].id;delete S.key;delete S.model}S.active=S.active||null;S.work=S.work||{target:3,niche:'',day:'',done:0};S.work.on=false;S.work.mode=S.work.mode||'auto';S.log=S.log||[];S.assets=S.assets||[];S.sales=S.sales||[];S.chat=S.chat||{};
-const save=()=>{try{localStorage.setItem('jc',JSON.stringify(S))}catch(e){}};
-const DIV={
-riset:['Riset & Analisis Pasar','Head of Research. Cari tren pasar global (AS/Eropa), bedah masalah pembeli, analisis kompetitor, tentukan harga jual dalam USD.'],
-produk:['Produk & Produksi','Lead Product Creator. Rancang blueprint produk digital dan tulis isi materi (e-book/template/panduan) berbahasa Inggris berkualitas tinggi.'],
-marketing:['Pemasaran & Penjualan','Chief Marketing Officer. Susun sales page persuasif untuk Gumroad/Etsy/Lemon Squeezy dan naskah konten promosi organik.'],
-finance:['Finance','Kepala Finance. Catat hasil penjualan, tentukan harga produk digital, rekap pendapatan. Pembayaran diproses platform dan dikirim ke rekening owner; kamu tidak memproses uang.'],
-qa:['Kontrol Kualitas','Quality Assurance. Kritik tajam dan perbaiki setiap hasil kerja sebelum diserahkan ke owner.']};
-const SYS=d=>`Kamu adalah ${DIV[d][0]} di Joy Corporation. ${DIV[d][1]} Owner/CEO tidak paham bahasa Inggris: penjelasan dan laporan ditulis dalam Bahasa Indonesia, sedangkan materi untuk pembeli ditulis dalam bahasa Inggris lalu diberi ringkasan Indonesia. Hasil konkret, siap pakai, tanpa basa-basi. Jangan mengarang data pasar sebagai fakta pasti; tandai sebagai perkiraan. Akhiri dengan "Rekomendasi Langkah Berikutnya".`;
-const PV={gemini:{n:'Google Gemini',m:['gemini-2.5-flash','gemini-2.5-pro','gemini-2.0-flash']},groq:{n:'Groq',m:['llama-3.3-70b-versatile','llama-3.1-8b-instant']},claude:{n:'Claude (Anthropic)',m:['claude-sonnet-5-5','claude-haiku-5-5','claude-opus-5-5']},hf:{n:'Hugging Face',m:['meta-llama/Llama-3.3-70B-Instruct','Qwen/Qwen2.5-72B-Instruct']},openai:{n:'OpenAI',m:['gpt-4o-mini','gpt-4o']},custom:{n:'Lainnya (kompatibel OpenAI)',m:[]}};
-const BASE={openai:'https://api.openai.com/v1',groq:'https://api.groq.com/openai/v1',hf:'https://router.huggingface.co/v1'};
-const base=k=>k.pv==='custom'?(k.url||'').replace(/\/+$/,''):BASE[k.pv];
-const CH={'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'};
-const aktif=()=>S.keys.find(x=>x.id===S.active);
-const AUTH=(r,m)=>r.status===401||r.status===403||/expired|not valid|invalid.*key|invalid x-api-key/i.test(String(m));
-function errMsg(r,j){
- const m=(j&&j.error&&(j.error.message||j.error))||'Gagal menghubungi AI';
- if(AUTH(r,m))return 'Kunci API ditolak (tidak valid atau kadaluarsa). Ganti kunci di Setelan. Detail: '+m;
- if(/model/i.test(String(m))&&/not exist|not found|no access|does not/i.test(String(m)))return 'Nama model salah atau tidak bisa diakses. Buka Setelan, tekan Ubah model pada kunci yang dipakai. Detail: '+m;
- if(r.status===429)return 'Kuota kunci ini habis atau terlalu banyak permintaan. Coba kunci lain di Setelan.';
- return String(m);
-}
-function fail(k,r,j){
- const e=new Error(errMsg(r,j));
- if(AUTH(r,(j&&j.error&&(j.error.message||j.error))||'')){k.st='bad';k.msg='Ditolak saat dipakai: tidak valid atau kadaluarsa.';k.chk=new Date().toLocaleString('id-ID');save()}
- return e;
-}
-async function ai(system,contents){
- try{return await ai0(system,contents)}catch(e){
-  if(e instanceof TypeError||/failed to fetch|networkerror|load failed/i.test(e.message))throw new Error('Tidak bisa terhubung ke penyedia AI. Penyebab umum: internet mati, atau aplikasi dibuka dari pratinjau di chat Claude (jaringan dan kotak dialog diblokir di sana). Buka lewat ikon aplikasi di HP atau alamat GitHub Pages Anda.');
-  throw e}
-}
-async function ai0(system,contents){
- const k=aktif();
- if(!k)throw new Error('Belum ada kunci API aktif. Tambahkan dan pilih kunci di tab Setelan.');
- let r,j;
- if(k.pv==='gemini'){
-  r=await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${k.model}:generateContent?key=${encodeURIComponent(k.key)}`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({systemInstruction:{parts:[{text:system}]},contents})});
-  j=await r.json();
-  if(!r.ok)throw fail(k,r,j);
-  const t=j.candidates&&j.candidates[0]&&j.candidates[0].content&&j.candidates[0].content.parts;
-  if(!t)throw new Error('AI tidak memberi jawaban. Coba ulangi.');
-  return t.map(p=>p.text||'').join('');
- }
- const msgs=contents.map(c=>({role:c.role==='model'?'assistant':'user',content:c.parts[0].text}));
- if(k.pv==='claude'){
-  r=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:Object.assign({'Content-Type':'application/json','x-api-key':k.key},CH),body:JSON.stringify({model:k.model,max_tokens:8000,system,messages:msgs})});
-  j=await r.json();
-  if(!r.ok)throw fail(k,r,j);
-  const t=(j.content||[]).map(p=>p.text||'').join('');
-  if(!t)throw new Error('AI tidak memberi jawaban. Coba ulangi.');
-  return t;
- }
- const b=base(k);if(!b)throw new Error('Alamat API kunci ini kosong. Hapus lalu tambahkan ulang.');
- r=await fetch(b+'/chat/completions',{method:'POST',headers:{'Content-Type':'application/json',Authorization:'Bearer '+k.key},body:JSON.stringify({model:k.model,messages:[{role:'system',content:system}].concat(msgs)})});
- j=await r.json();
- if(!r.ok)throw fail(k,r,j);
- const c=j.choices&&j.choices[0]&&j.choices[0].message;
- if(!c)throw new Error('AI tidak memberi jawaban. Coba ulangi.');
- return c.content||'';
-}
-async function cek(k){
- try{
-  let r;
-  if(k.pv==='gemini')r=await fetch('https://generativelanguage.googleapis.com/v1beta/models?pageSize=200&key='+encodeURIComponent(k.key));
-  else if(k.pv==='claude')r=await fetch('https://api.anthropic.com/v1/models?limit=1',{headers:Object.assign({'x-api-key':k.key},CH)});
-  else if(k.pv==='hf')r=await fetch('https://huggingface.co/api/whoami-v2',{headers:{Authorization:'Bearer '+k.key}});
-  else{const b=base(k);if(!b)return ['bad','Alamat API belum diisi.'];r=await fetch(b+'/models',{headers:{Authorization:'Bearer '+k.key}})}
-  if(r.ok){
-   if(k.pv!=='claude'&&k.pv!=='hf'){
-    let ids=[];try{const j=await r.clone().json();ids=(j.data||j.models||[]).map(x=>String(x.id||x.name||'').replace(/^models\//,''))}catch(e){}
-    if(ids.length&&!ids.includes(k.model))return ['model','Kunci valid, tetapi model "'+k.model+'" tidak ada di akun ini. Tekan Ubah model lalu isi nama model yang benar.'];
-   }
-   return ['ok','Kunci dan model valid, siap dipakai.'];
+  tailwind.config = {
+    theme: {
+      extend: {
+        colors: {
+          base: "#070b14",
+          panel: "#0d1420",
+          panel2: "#111a29",
+          line: "#1e2b40",
+          accent: "#38bdf8",
+          accent2: "#a855f7"
+        },
+        fontFamily: {
+          sans: ["Inter", "system-ui", "sans-serif"]
+        }
+      }
+    }
   }
-  if(r.status===429)return ['quota','Kunci dikenali tetapi kuota habis atau terlalu banyak permintaan.'];
-  if(r.status===400||r.status===401||r.status===403)return ['bad','Kunci tidak valid, salah salin, atau sudah kadaluarsa/dicabut.'];
-  if(r.status===404)return ['net','Alamat API tidak ditemukan (kode 404). Periksa alamat yang diisi.'];
-  return ['net','Pengecekan gagal (kode '+r.status+'). Coba lagi nanti.'];
- }catch(e){return ['net','Tidak bisa terhubung. Periksa internet atau alamat API, lalu coba lagi.']}
-}
-const copy=async t=>{try{await navigator.clipboard.writeText(t);alert('Tersalin')}catch(e){alert('Salin manual: tekan lama teks')}};
-// ---- tabs
-const TABS=[['kantor','Kantor'],['request','Request'],['aset','Aset'],['log','Log'],['uang','Keuangan'],['set','Setelan']];
-let tab='kantor',cur='riset',busy=false,prog={p:0,t:'',on:false};
-function nav(){const n=$('#nav');n.innerHTML='';TABS.forEach(([k,l])=>{const b=el('button',k===tab?'on':'',l);b.onclick=()=>{tab=k;nav();draw()};n.append(b)})}
-function draw(){const m=$('#m');m.innerHTML='';({kantor,request,aset,log:logTab,uang,set:setelan})[tab](m);}
-// ---- kantor
-function kantor(m){
- const ch=el('div','chips');Object.keys(DIV).forEach(k=>{const b=el('button',k===cur?'on':'','@'+DIV[k][0]);b.onclick=()=>{cur=k;draw()};ch.append(b)});m.append(ch);
- const h=S.chat[cur]=S.chat[cur]||[];
- if(!h.length)m.append(el('div','mut','Ketik perintah untuk divisi '+DIV[cur][0]+'. Contoh: "cari 3 ide produk digital yang cepat laku di AS".'));
- h.forEach(x=>m.append(el('div','msg '+(x.role==='user'?'u':'a'),x.parts[0].text)));
- const ta=el('textarea');ta.placeholder='Perintah untuk '+DIV[cur][0];
- const row=el('div','row');const send=el('button','btn','Kirim');const clr=el('button','btn alt','Hapus chat');
- row.append(send,clr);m.append(ta,row);
- clr.onclick=()=>{S.chat[cur]=[];save();draw()};
- send.onclick=async()=>{const t=ta.value.trim();if(!t||busy)return;busy=true;send.disabled=true;send.textContent='Divisi bekerja...';
-  h.push({role:'user',parts:[{text:t}]});
-  try{const a=await ai(SYS(cur),h.slice(-12));h.push({role:'model',parts:[{text:a}]})}catch(e){h.pop();alert(e.message)}
-  busy=false;save();draw();m.scrollTop=m.scrollHeight};
-}
-// ---- request produk (pipeline)
-const STAGES=[
-['Riset pasar','riset',(r,o)=>`Request produk dari CEO: "${r}".\nLakukan analisis pasar AS/Eropa: siapa pembelinya, masalah utama mereka, 3 tipe kompetitor dan kelemahannya, celah peluang, dan harga jual USD yang disarankan (tandai sebagai perkiraan). Ringkas dan padat.`],
-['Produksi produk','produk',(r,o)=>`Request: "${r}".\nHasil riset:\n${o.riset}\n\nBuat produk digital lengkap, siap dijual, isi dalam bahasa Inggris berkualitas tinggi (judul, struktur, seluruh isi materi). Lalu satu paragraf ringkasan Indonesia.`],
-['Kontrol kualitas','qa',(r,o)=>`Kritik produk ini dengan sangat ketat (kejelasan, nilai bagi pembeli, tata bahasa, kesalahan fakta, janji berlebihan). Mulai dengan baris "SKOR: x/10" dan daftar masalah dalam Bahasa Indonesia. Setelah itu tulis satu baris persis =====FINAL===== lalu VERSI FINAL produk yang sudah diperbaiki, seluruhnya dalam bahasa Inggris, tanpa komentar tambahan.\n\nProduk:\n${o.produk}`],
-['Sales page & konten','marketing',(r,o)=>`Berdasarkan produk final ini, tulis dalam bahasa Inggris: (1) sales page siap tempel di Gumroad (judul, subjudul, 5 poin manfaat, deskripsi, isi paket, FAQ singkat, ajakan beli), (2) 3 naskah video pendek TikTok/Reels. Tambahkan ringkasan Indonesia.\n\nProduk final:\n${o.fin}`],
-['Harga & ringkasan','finance',(r,o)=>`Tentukan harga final dalam USD dengan alasan singkat berdasarkan riset ini, dan buat RINGKASAN INDONESIA maksimal 10 baris yang menjelaskan seluruh produk, siapa pembelinya, dan cara menjualnya. Riset:\n${o.riset}\n\nSales page:\n${o.marketing}`]];
-let wk={run:false,stop:false},wakeLock=null;
-const logAdd=(who,msg)=>{S.log.push({t:Date.now(),w:who,m:String(msg).slice(0,300)});if(S.log.length>300)S.log=S.log.slice(-300);save();if(tab==='log')draw()};
-async function waitStop(sec){for(let i=0;i<sec&&!wk.stop;i++)await new Promise(r=>setTimeout(r,1000))}
-async function aiR(sys,c){for(let i=0;;i++){try{return await ai(sys,c)}catch(e){
- if(/kuota|429|rate|batas/i.test(e.message)&&i<2&&!wk.stop){logAdd('Sistem','Kena batas pemakaian. Menunggu 45 detik lalu mengulang ('+(i+1)+'/2).');setMsg('Menunggu batas pemakaian reset (45 detik)...');await waitStop(45);if(wk.stop)throw new Error('STOP');continue}
- throw e}}}
-const hari=()=>new Date().toLocaleDateString('id-ID');
-const sleep=ms=>new Promise(r=>setTimeout(r,ms));
-const setMsg=(t,p)=>{prog={p:p==null?prog.p:p,t:t,on:true};paint()};
-async function lock(on){try{if(on&&navigator.wakeLock)wakeLock=await navigator.wakeLock.request('screen');else if(wakeLock){await wakeLock.release();wakeLock=null}}catch(e){}}
-async function produce(r){
- const o={};
- for(let i=0;i<STAGES.length;i++){const [n,d,f]=STAGES[i];
-  if(wk.stop)throw new Error('STOP');
-  logAdd(DIV[d][0],'Mulai: '+n+' ('+r.slice(0,40)+')');
-  setMsg((wk.run?'WORKING | ':'')+r.slice(0,45)+' | Tahap '+(i+1)+'/6: '+n+'...',Math.round(i/(STAGES.length+1)*100));
-  o[d]=await aiR(SYS(d),[{role:'user',parts:[{text:f(r,o)}]}]);
-  logAdd(DIV[d][0],'Selesai: '+n);
-  if(d==='qa')o.fin=(o.qa.split(/=+\s*FINAL\s*=+/i)[1]||'').trim()||o.qa}
- if(wk.stop)throw new Error('STOP');
- setMsg((wk.run?'WORKING | ':'')+r.slice(0,45)+' | Tahap 6/6: Paket Gumroad dan sampul...',Math.round(STAGES.length/(STAGES.length+1)*100));
- logAdd(DIV.marketing[0],'Mulai: paket Gumroad dan sampul');o.gr=await aiR(SYS('marketing'),[{role:'user',parts:[{text:GRP(r,o)}]}]);logAdd(DIV.marketing[0],'Selesai: paket Gumroad dan sampul dibuat');
- const sk=(o.qa.match(/SKOR:\s*([\d.]+)\/10/i)||[])[1]||'-';
- S.assets.unshift({id:Date.now(),title:r.slice(0,70),date:hari(),skor:sk,riset:o.riset,produk:o.qa,final:o.fin,gr:parseGr(o.gr,r),marketing:o.marketing,ringkas:o.finance,ok:false,link:''});save();logAdd(DIV.qa[0],'Skor QA '+sk+'/10 untuk: '+r.slice(0,50));logAdd('Sistem','Produk masuk tab Aset: '+r.slice(0,50));
-}
-async function working(){
- if(wk.run||busy)return;
- if(S.work.mode==='request'&&!S.work.niche){alert('Mode Request: isi dulu arah atau jenis produknya.');return}
- wk.run=true;wk.stop=false;busy=true;await lock(true);draw();logAdd('Sistem','WORKING dimulai ('+(S.work.mode==='request'?'Request: '+S.work.niche:'Otomatis, riset pasar global')+'). Target: '+S.work.target+' produk.');
- try{
-  while(!wk.stop){
-   if(S.work.day!==hari()){S.work.day=hari();S.work.done=0;save()}
-   if(S.work.done>=S.work.target){logAdd('Sistem','Target '+S.work.target+' produk tercapai.');setMsg('Target hari ini ('+S.work.target+' produk) tercapai. Periksa hasilnya di tab Aset.',100);break}
-   setMsg('WORKING | Riset: mencari ide produk ke-'+(S.work.done+1)+'...',0);
-   const have=S.assets.slice(0,30).map(a=>a.title).join('; ');
-   const raw=await aiR(SYS('riset'),[{role:'user',parts:[{text:'Berdasarkan riset tren pasar global (AS/Eropa), pilih 1 ide produk digital baru yang cepat laku'+(S.work.mode==='request'&&S.work.niche?' dengan arah: '+S.work.niche:'')+'. Pilih topik atau kategori yang jelas berbeda dari produk yang sudah ada. Hindari ide yang mirip dengan: '+(have||'(belum ada)')+'. Balas HANYA 1 baris berisi ide produk dalam bahasa Inggris, tanpa penjelasan.'}]}]);
-   const idea=raw.trim().split('\n')[0].replace(/^[\s\-*"]+/,'').replace(/^\d+[.)]\s+/,'').replace(/["\s]+$/,'').slice(0,120);
-   if(!idea)throw new Error('Ide produk kosong, coba lagi.');
-   logAdd(DIV.riset[0],'Ide produk dipilih: '+idea);
-   await produce(idea);S.work.done++;save();
-   setMsg('Produk selesai: '+idea.slice(0,50)+' ('+S.work.done+'/'+S.work.target+' hari ini)',100);
-   await sleep(2500);
+</script>
+<style>
+  * { scrollbar-width: thin; scrollbar-color: #233149 transparent; }
+  *::-webkit-scrollbar { width: 8px; height: 8px; }
+  *::-webkit-scrollbar-thumb { background: #233149; border-radius: 999px; }
+  body { background: radial-gradient(circle at 10% 0%, #10233a 0%, #070b14 45%, #05080f 100%); }
+  .glass { background: rgba(13,20,32,.88); border: 1px solid rgba(56,189,248,.12); backdrop-filter: blur(12px); }
+  .glow { box-shadow: 0 0 0 1px rgba(56,189,248,.15), 0 20px 60px -25px rgba(56,189,248,.35); }
+  .pulse-dot { animation: pulse 1.8s infinite; }
+  @keyframes pulse { 0%,100% { opacity: 1; transform: scale(1); } 50% { opacity: .45; transform: scale(.82); } }
+  .typing::after { content: "▍"; animation: blink 1s steps(2) infinite; color: #38bdf8; }
+  @keyframes blink { 50% { opacity: 0; } }
+  .fade-in { animation: fade .35s ease both; }
+  @keyframes fade { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+  .prose-ai { white-space: pre-wrap; line-height: 1.65; font-size: .9rem; color: #cbd5e1; }
+</style>
+</head>
+<body class="min-h-screen text-slate-200 font-sans antialiased">
+
+<div class="flex min-h-screen">
+
+  <!-- SIDEBAR -->
+  <aside id="sidebar" class="fixed lg:static z-50 inset-y-0 left-0 w-[280px] -translate-x-full lg:translate-x-0 transition-transform duration-300 bg-[#080d16]/95 border-r border-line flex flex-col">
+    <div class="p-5 border-b border-line">
+      <div class="flex items-center gap-3">
+        <!-- Logo JC -->
+        <div class="w-11 h-11 shrink-0 rounded-xl bg-gradient-to-br from-accent to-accent2 grid place-items-center font-black text-[#04121d] text-lg">JC</div>
+        <!-- Teks Brand & Tagline -->
+        <div class="min-w-0">
+          <div class="font-bold tracking-tight text-white leading-tight">JOY CORPORATION</div>
+          <div class="text-[10px] text-accent2 italic truncate">"Kami ada karena kamu Ade"</div>
+          <div class="text-[10px] text-slate-400 mt-0.5">Command Center</div>
+        </div>
+      </div>
+    </div>
+
+    <nav id="divisionNav" class="flex-1 overflow-y-auto p-3 space-y-1"></nav>
+
+    <div class="p-3 border-t border-line space-y-2">
+      <button onclick="openSettings()" class="w-full flex items-center gap-3 px-3 py-3 rounded-xl bg-panel2 hover:bg-line transition text-sm">
+        <span>⚙️</span><span class="font-medium">Settings</span>
+        <span id="apiKeyStatus" class="ml-auto text-[10px] px-2 py-1 rounded-full bg-amber-500/15 text-amber-300">No Key</span>
+      </button>
+      <div class="px-3 py-2 text-[11px] text-slate-500">
+        Data tersimpan lokal di browser Anda.
+      </div>
+    </div>
+  </aside>
+
+  <div id="sidebarOverlay" onclick="toggleSidebar()" class="fixed inset-0 bg-black/60 z-40 hidden lg:hidden"></div>
+
+  <!-- MAIN -->
+  <main class="flex-1 min-w-0">
+
+    <header class="sticky top-0 z-30 glass border-b border-line px-4 sm:px-6 py-3 flex items-center gap-3">
+      <button onclick="toggleSidebar()" class="lg:hidden w-10 h-10 rounded-xl bg-panel2 border border-line grid place-items-center">☰</button>
+      <div class="min-w-0">
+        <h1 id="headerTitle" class="font-bold text-white truncate">Dashboard</h1>
+        <p id="headerSubtitle" class="text-xs text-slate-400 truncate">Pusat kendali operasional JOY CORPORATION</p>
+      </div>
+      <div class="ml-auto flex items-center gap-2">
+        <span class="hidden sm:flex items-center gap-2 text-xs px-3 py-2 rounded-full bg-emerald-500/10 text-emerald-300 border border-emerald-500/20">
+          <span class="w-2 h-2 rounded-full bg-emerald-400 pulse-dot"></span> Online
+        </span>
+        <button onclick="openSettings()" class="w-10 h-10 rounded-xl bg-panel2 border border-line grid place-items-center hover:bg-line transition">⚙️</button>
+      </div>
+    </header>
+
+    <div class="p-4 sm:p-6 space-y-6">
+
+      <!-- DASHBOARD -->
+      <section id="view-dashboard" class="view space-y-6">
+        <div class="glass glow rounded-3xl p-6 sm:p-8">
+          <div class="flex flex-wrap items-center gap-3 mb-4">
+            <span class="text-xs px-3 py-1 rounded-full bg-accent/10 text-accent border border-accent/20">Command Center</span>
+            <span class="text-xs px-3 py-1 rounded-full bg-accent2/10 text-purple-300 border border-purple-500/20">7 Divisi Aktif</span>
+          </div>
+          <!-- Judul dan Tagline -->
+          <h2 class="text-2xl sm:text-4xl font-black text-white tracking-tight">JOY CORPORATION<br class="hidden sm:block"> Command Center</h2>
+          <p class="text-accent2 font-bold mt-1 text-sm sm:text-base italic">"Kami ada karena kamu Ade"</p>
+          <p class="mt-3 text-slate-400 max-w-2xl">Kelola riset, bisnis, keuangan, produksi, QC, sales, marketing, dan layanan pelanggan dalam satu ruang kerja berbasis AI.</p>
+          <div class="mt-6 flex flex-wrap gap-3">
+            <button onclick="selectDivision('purchasing')" class="px-5 py-3 rounded-xl bg-accent text-[#04121d] font-bold hover:brightness-110 transition">Buka Workspace</button>
+            <button onclick="runAutoCycle()" class="px-5 py-3 rounded-xl bg-panel2 border border-line font-semibold hover:bg-line transition">Jalankan Siklus Otomatis</button>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
+          <div class="glass rounded-2xl p-5">
+            <div class="text-xs text-slate-400">Pemasukan</div>
+            <div id="statIncome" class="mt-2 text-2xl font-black text-emerald-400">$0</div>
+          </div>
+          <div class="glass rounded-2xl p-5">
+            <div class="text-xs text-slate-400">Pengeluaran</div>
+            <div id="statExpense" class="mt-2 text-2xl font-black text-rose-400">$0</div>
+          </div>
+          <div class="glass rounded-2xl p-5">
+            <div class="text-xs text-slate-400">Produk Siap Jual</div>
+            <div id="statProducts" class="mt-2 text-2xl font-black text-white">0</div>
+          </div>
+          <div class="glass rounded-2xl p-5">
+            <div class="text-xs text-slate-400">Pesanan Aktif</div>
+            <div id="statOrders" class="mt-2 text-2xl font-black text-accent">0</div>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 xl:grid-cols-3 gap-4">
+          <div class="glass rounded-2xl p-5 xl:col-span-2">
+            <h3 class="font-bold text-white mb-4">Status Divisi</h3>
+            <div id="divisionStatusGrid" class="grid grid-cols-1 sm:grid-cols-2 gap-3"></div>
+          </div>
+          <div class="glass rounded-2xl p-5">
+            <h3 class="font-bold text-white mb-4">Aktivitas Terbaru</h3>
+            <div id="activityFeed" class="space-y-3 text-sm"></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- WORKSPACE -->
+      <section id="view-workspace" class="view hidden space-y-5">
+        <div class="glass rounded-3xl p-5 sm:p-6">
+          <div class="flex flex-wrap items-start gap-4">
+            <div id="workspaceIcon" class="w-14 h-14 rounded-2xl bg-panel2 border border-line grid place-items-center text-2xl">🤖</div>
+            <div class="min-w-0 flex-1">
+              <div class="flex items-center gap-2">
+                <h2 id="workspaceTitle" class="text-xl sm:text-2xl font-bold text-white">Divisi</h2>
+                <span id="workspaceStatus" class="text-[11px] px-2 py-1 rounded-full bg-emerald-500/15 text-emerald-300 border border-emerald-500/20">Online / Otomatis</span>
+              </div>
+              <p id="workspaceDesc" class="text-sm text-slate-400 mt-1">Deskripsi divisi</p>
+            </div>
+          </div>
+
+          <div class="mt-5 grid grid-cols-1 lg:grid-cols-3 gap-4">
+            <div class="lg:col-span-2 space-y-4">
+              <div>
+                <label class="text-xs font-semibold text-slate-300">Instruksi untuk AI</label>
+                <textarea id="promptInput" rows="5" class="mt-2 w-full rounded-xl bg-panel2 border border-line px-4 py-3 text-sm outline-none focus:border-accent transition" placeholder="Contoh: Riset ide produk digital untuk UMKM Indonesia..."></textarea>
+              </div>
+              <div class="flex flex-wrap gap-3">
+                <button onclick="runDivisionAI()" id="runBtn" class="px-5 py-3 rounded-xl bg-accent text-[#04121d] font-bold hover:brightness-110 transition">Kirim ke AI</button>
+                <button onclick="clearWorkspace()" class="px-5 py-3 rounded-xl bg-panel2 border border-line font-semibold hover:bg-line transition">Bersihkan</button>
+              </div>
+              <div id="workspaceOutput" class="rounded-2xl bg-[#080d16] border border-line p-5 min-h-[280px]">
+                <div class="text-sm text-slate-500">Hasil kerja AI akan muncul di sini.</div>
+              </div>
+            </div>
+
+            <div class="space-y-4">
+              <div class="rounded-2xl bg-panel2 border border-line p-4">
+                <h4 class="font-bold text-white text-sm mb-2">Peran Sistem</h4>
+                <p id="rolePreview" class="text-xs text-slate-400 leading-relaxed"></p>
+              </div>
+              <div class="rounded-2xl bg-panel2 border border-line p-4">
+                <h4 class="font-bold text-white text-sm mb-3">Riwayat Divisi</h4>
+                <div id="historyList" class="space-y-2 max-h-64 overflow-y-auto text-xs"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- FINANCE -->
+      <section id="view-finance" class="view hidden space-y-5">
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+          <div class="glass rounded-2xl p-5">
+            <div class="text-xs text-slate-400">Total Pemasukan</div>
+            <div id="financeIncome" class="mt-2 text-2xl font-black text-emerald-400">$0</div>
+          </div>
+          <div class="glass rounded-2xl p-5">
+            <div class="text-xs text-slate-400">Total Pengeluaran</div>
+            <div id="financeExpense" class="mt-2 text-2xl font-black text-rose-400">$0</div>
+          </div>
+          <div class="glass rounded-2xl p-5">
+            <div class="text-xs text-slate-400">Laba Bersih</div>
+            <div id="financeProfit" class="mt-2 text-2xl font-black text-white">$0</div>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 xl:grid-cols-2 gap-4">
+          <div class="glass rounded-2xl p-5">
+            <h3 class="font-bold text-white mb-4">Catat Transaksi</h3>
+            <div class="space-y-3">
+              <input id="financeDesc" placeholder="Deskripsi transaksi" class="w-full rounded-xl bg-panel2 border border-line px-4 py-3 text-sm outline-none focus:border-accent" />
+              <input id="financeAmount" type="number" min="0" step="0.01" placeholder="Jumlah USD" class="w-full rounded-xl bg-panel2 border border-line px-4 py-3 text-sm outline-none focus:border-accent" />
+              <select id="financeType" class="w-full rounded-xl bg-panel2 border border-line px-4 py-3 text-sm outline-none focus:border-accent">
+                <option value="income">Pemasukan</option>
+                <option value="expense">Pengeluaran</option>
+              </select>
+              <button onclick="addFinanceRecord()" class="w-full py-3 rounded-xl bg-accent text-[#04121d] font-bold hover:brightness-110 transition">Simpan Transaksi</button>
+            </div>
+          </div>
+
+          <div class="glass rounded-2xl p-5">
+            <h3 class="font-bold text-white mb-4">Riwayat Keuangan</h3>
+            <div id="financeList" class="space-y-2 max-h-72 overflow-y-auto"></div>
+          </div>
+        </div>
+
+        <div class="glass rounded-2xl p-5">
+          <h3 class="font-bold text-white mb-4">Produk Siap Jual</h3>
+          <div id="readyProducts" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3"></div>
+        </div>
+      </section>
+
+      <!-- CUSTOMER SERVICE -->
+      <section id="view-cs" class="view hidden space-y-5">
+        <div class="glass rounded-3xl p-5 sm:p-6">
+          <h2 class="text-xl font-bold text-white">Portal Request Customer</h2>
+          <p class="text-sm text-slate-400 mt-1">Form simulasi pesanan custom. Pesanan otomatis masuk ke antrean produksi.</p>
+
+          <div class="mt-5 grid grid-cols-1 lg:grid-cols-2 gap-4">
+            <div class="space-y-3">
+              <input id="customerName" placeholder="Nama pelanggan" class="w-full rounded-xl bg-panel2 border border-line px-4 py-3 text-sm outline-none focus:border-accent" />
+              <input id="customerEmail" placeholder="Email pelanggan" class="w-full rounded-xl bg-panel2 border border-line px-4 py-3 text-sm outline-none focus:border-accent" />
+              <input id="productName" placeholder="Nama produk / layanan custom" class="w-full rounded-xl bg-panel2 border border-line px-4 py-3 text-sm outline-none focus:border-accent" />
+              <textarea id="customerNotes" rows="4" placeholder="Detail kebutuhan custom..." class="w-full rounded-xl bg-panel2 border border-line px-4 py-3 text-sm outline-none focus:border-accent"></textarea>
+              <input id="customerBudget" type="number" min="0" step="0.01" placeholder="Estimasi anggaran USD" class="w-full rounded-xl bg-panel2 border border-line px-4 py-3 text-sm outline-none focus:border-accent" />
+              <button onclick="submitCustomerRequest()" class="w-full py-3 rounded-xl bg-accent text-[#04121d] font-bold hover:brightness-110 transition">Kirim Request & Masuk Produksi</button>
+            </div>
+
+            <div class="rounded-2xl bg-panel2 border border-line p-4">
+              <h3 class="font-bold text-white mb-3">Antrean Produksi</h3>
+              <div id="productionQueue" class="space-y-3 max-h-[420px] overflow-y-auto"></div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- SETTINGS -->
+      <section id="view-settings" class="view hidden space-y-5">
+        <div class="glass rounded-3xl p-5 sm:p-6 max-w-3xl">
+          <h2 class="text-xl font-bold text-white">Settings</h2>
+          <p class="text-sm text-slate-400 mt-1">Masukkan Gemini API Key. Key hanya disimpan di <code class="text-accent">localStorage</code> browser Anda.</p>
+
+          <div class="mt-5 space-y-3">
+            <label class="text-xs font-semibold text-slate-300">Gemini API Key</label>
+            <input id="geminiKey" type="password" placeholder="AIza..." class="w-full rounded-xl bg-panel2 border border-line px-4 py-3 text-sm outline-none focus:border-accent" />
+            <label class="text-xs font-semibold text-slate-300">Model Gemini</label>
+            <input id="geminiModel" value="gemini-2.0-flash" class="w-full rounded-xl bg-panel2 border border-line px-4 py-3 text-sm outline-none focus:border-accent" />
+            <div class="flex flex-wrap gap-3 pt-2">
+              <button onclick="saveSettings()" class="px-5 py-3 rounded-xl bg-accent text-[#04121d] font-bold hover:brightness-110 transition">Simpan</button>
+              <button onclick="clearSettings()" class="px-5 py-3 rounded-xl bg-panel2 border border-line font-semibold hover:bg-line transition">Hapus Key</button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+    </div>
+  </main>
+</div>
+
+<div id="toast" class="fixed bottom-5 right-5 z-[70] hidden"></div>
+
+<script>
+const DIVISIONS = {
+  purchasing: {
+    name: "Purchasing",
+    icon: "🛒",
+    color: "text-sky-300",
+    desc: "Riset produk, supplier, harga, dan peluang pasar.",
+    system: "Kamu adalah Senior Purchasing & Market Research Specialist JOY CORPORATION. Lakukan riset ide, analisis supplier, estimasi biaya, risiko, dan rekomendasi produk/layanan. Jawab dalam Bahasa Indonesia, terstruktur, praktis, dan berbasis data yang wajar."
+  },
+  business_development: {
+    name: "Business Development",
+    icon: "📈",
+    color: "text-emerald-300",
+    desc: "Mengubah riset menjadi peluang bisnis dan strategi.",
+    system: "Kamu adalah Senior Business Development Strategist JOY CORPORATION. Evaluasi hasil riset, tentukan model bisnis, target pasar, value proposition, go-to-market, kemitraan, dan langkah eksekusi. Jawab dalam Bahasa Indonesia secara terstruktur."
+  },
+  finance: {
+    name: "Finance",
+    icon: "💰",
+    color: "text-amber-300",
+    desc: "Analisis biaya, harga, profitabilitas, dan anggaran.",
+    system: "Kamu adalah Senior Finance Analyst JOY CORPORATION. Analisis kelayakan finansial, estimasi biaya, harga jual, margin, break-even, cash flow, dan risiko keuangan. Gunakan USD dan format tabel bila relevan. Jawab dalam Bahasa Indonesia."
+  },
+  production: {
+    name: "Produksi",
+    icon: "🏭",
+    color: "text-orange-300",
+    desc: "Rencana produksi, alur kerja, resource, dan timeline.",
+    system: "Kamu adalah Senior Production Operations Manager JOY CORPORATION. Susun rencana produksi, SOP, kebutuhan resource, timeline, kapasitas, quality gate, dan risiko operasional. Jawab dalam Bahasa Indonesia secara terstruktur."
+  },
+  quality_control: {
+    name: "Quality Control",
+    icon: "✅",
+    color: "text-lime-300",
+    desc: "Validasi kualitas, risiko, dan kesiapan rilis.",
+    system: "Kamu adalah Senior Quality Control Manager JOY CORPORATION. Audit rencana dari purchasing, business development, finance, dan production. Identifikasi risiko, kelemahan, ketidaksesuaian, dan berikan verdict: APPROVED, REVISED, atau REJECTED beserta perbaikan konkret. Jawab dalam Bahasa Indonesia."
+  },
+  sales_marketing: {
+    name: "Sales & Marketing",
+    icon: "📣",
+    color: "text-fuchsia-300",
+    desc: "Strategi penjualan, branding, konten, dan konversi.",
+    system: "Kamu adalah Senior Sales & Marketing Strategist JOY CORPORATION. Buat strategi positioning, target audiens, funnel, konten, copywriting, channel distribusi, promo, dan KPI penjualan. Jawab dalam Bahasa Indonesia."
+  },
+  cs: {
+    name: "Customer Service",
+    icon: "🎧",
+    color: "text-cyan-300",
+    desc: "Portal request pelanggan, antrean produksi, dan layanan.",
+    system: "Kamu adalah Senior Customer Success Specialist JOY CORPORATION. Bantu klarifikasi kebutuhan pelanggan, susun brief pesanan custom, estimasi lingkup, pertanyaan lanjutan, dan rekomendasi penanganan pesanan. Jawab dalam Bahasa Indonesia."
   }
- }catch(e){logAdd('Sistem',e.message==='STOP'?'WORKING dihentikan oleh CEO.':'Berhenti karena error: '+e.message);if(e.message!=='STOP')setMsg('Berhenti: '+e.message);else setMsg('Working dihentikan.',prog.p)}
- wk.run=false;busy=false;await lock(false);if(tab==='request')draw();
+};
+
+const STORE_KEYS = {
+  key: "adc_gemini_key",
+  model: "adc_gemini_model",
+  finance: "adc_finance",
+  orders: "adc_orders",
+  history: "adc_history"
+};
+
+let currentDivision = "purchasing";
+let isRunning = false;
+
+const $ = id => document.getElementById(id);
+
+function loadJSON(key, fallback) {
+  try { return JSON.parse(localStorage.getItem(key)) || fallback; }
+  catch { return fallback; }
 }
-function request(m){
- m.append(el('h3',null,'Request Produk'));
- const w=el('div','card');w.append(el('b',null,'Mode WORKING (otomatis)'));
- w.append(el('div','mut','Sekali tekan: AI mencari ide, membuat produk, QA, sales page, dan harga, berulang sampai target hari ini. Hasil masuk tab Aset dan menunggu persetujuan Anda.'));
- const mr=el('div','row');mr.style.margin='8px 0';
- const mk=(k,l)=>{const b=el('button','btn sm'+(S.work.mode===k?'':' alt'),l);b.disabled=wk.run;b.onclick=()=>{S.work.mode=k;save();draw()};return b};
- mr.append(mk('auto','Otomatis (riset pasar global)'),mk('request','Request'));
- const ni=el('input');ni.placeholder='Tulis arah/jenis produk, mis. template untuk guru';ni.value=S.work.niche||'';ni.onchange=()=>{S.work.niche=ni.value.trim();save()};
- const tl=el('div','mut','Target produk per hari (1 sampai 20):');
- const tg=el('input');tg.type='number';tg.inputMode='numeric';tg.min=1;tg.max=20;tg.value=S.work.target;tg.onchange=()=>{S.work.target=Math.max(1,Math.min(20,parseInt(tg.value)||3));tg.value=S.work.target;save()};
- const wb=el('button','btn',wk.run?'STOP WORKING':'WORKING');wb.style.width='100%';wb.style.fontSize='18px';
- if(wk.run)wb.style.background='#a83a3a';
- wb.onclick=()=>{if(wk.run){wk.stop=true;wb.disabled=true;wb.textContent='Menghentikan...'}else working()};
- const b10=el('button','btn alt','Produksi 10 produk sekarang');b10.style.width='100%';b10.style.marginTop='8px';
- b10.onclick=()=>{if(wk.run||busy)return;if(!confirm('Buat 10 produk berbeda sekarang? Ini memakai sekitar 70 panggilan AI dan bisa kena batas kuota kunci Anda.'))return;S.work.target=10;S.work.done=0;S.work.day=hari();tg.value=10;save();working()};
- w.append(mr,S.work.mode==='request'?ni:el('div','mut','Mode otomatis: AI memilih sendiri produk yang paling laku berdasarkan pengetahuannya tentang tren pasar AS/Eropa.'),tl,tg,wb,b10,el('div','mut','Aplikasi harus tetap terbuka dengan layar menyala. Kalau ditutup atau layar terkunci lama, proses berhenti. Produk yang sedang dikerjakan saat STOP dibatalkan.'));
- m.append(w);
- const c=el('div','card');c.append(el('b',null,'Request manual (satu produk)'));const ta=el('textarea');ta.placeholder='Tulis permintaan produk, mis. "template jurnal syukur 30 hari untuk pasar AS"';
- const go=el('button','btn','Mulai produksi');go.disabled=wk.run;c.append(ta,go);m.append(c);
- const pc=el('div','card');pc.id='pc';m.append(pc);paint();
- go.onclick=async()=>{const r=ta.value.trim();if(!r||busy||wk.run)return;busy=true;go.disabled=true;
-  try{await produce(r);setMsg('Selesai. Produk tersimpan di tab Aset.',100);ta.value=''}
-  catch(e){logAdd('Sistem','Produksi manual berhenti: '+e.message);setMsg('Berhenti: '+e.message)}
-  busy=false;go.disabled=false;prog.on=false;paint()};
+
+function saveJSON(key, value) {
+  localStorage.setItem(key, JSON.stringify(value));
 }
-function paint(){const pc=$('#pc');if(!pc)return;pc.innerHTML='';pc.append(el('div','mut',prog.t||'Belum ada produksi berjalan.'));const b=el('div','bar');const i=el('i');i.style.width=prog.p+'%';b.append(i);pc.append(b,el('div','mut',prog.p+'%'))}
-// ---- aset
-const dlf=(n,t,mime)=>{const b=new Blob([t],{type:mime||'text/plain;charset=utf-8'});const u=URL.createObjectURL(b);const a=document.createElement('a');a.href=u;a.download=n;document.body.append(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(u),3000)};
-const slug=t=>t.toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'').slice(0,40)||'produk';
-const esc=t=>String(t).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
-const secs=a=>[['Ringkasan Indonesia',a.ringkas],['Produk final (Inggris) dan catatan QA',a.produk],['Sales page dan naskah konten',a.marketing],['Riset pasar',a.riset]];
-const stat=a=>'Dibuat '+a.date+' | Skor QA '+a.skor+'/10 | '+(a.ok?'Disetujui CEO':'Menunggu persetujuan');
-const pkgTxt=a=>a.title+'\n'+stat(a)+'\n\n'+secs(a).map(([t,x])=>'=== '+t+' ===\n'+x).join('\n\n');
-const pkgHtml=a=>'<!DOCTYPE html><html lang="id"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>'+esc(a.title)+'</title><style>body{font:16px/1.6 system-ui,sans-serif;max-width:760px;margin:0 auto;padding:16px;color:#1F2A33}h1{font-family:Georgia,serif;color:#1E3A5F}h2{color:#1E3A5F;border-bottom:2px solid #B8892B;padding-bottom:4px}pre{white-space:pre-wrap;word-wrap:break-word;font:inherit}</style></head><body><h1>'+esc(a.title)+'</h1><p>'+esc(stat(a))+'</p>'+secs(a).map(([t,x])=>'<h2>'+esc(t)+'</h2><pre>'+esc(x)+'</pre>').join('')+'</body></html>';
-const GRP=(r,o)=>`Berdasarkan produk final dan sales page ini, buat paket unggah Gumroad dalam bahasa Inggris. Jangan menjanjikan penghasilan atau klaim yang tidak bisa dibuktikan. Sebutkan bahwa konten dibuat dengan bantuan AI dan ditinjau. Balas PERSIS dalam format ini, tanpa teks lain:\nTITLE: (maks 7 kata)\nSUBTITLE: (maks 12 kata)\nBULLETS: poin 1 | poin 2 | poin 3 (tiap poin maks 5 kata)\nPRICE: (angka USD saja, mis. 9.99)\nDESCRIPTION: (deskripsi produk 120 sampai 200 kata)\n\nProduk final:\n${String(o.fin).slice(0,3500)}\n\nSales page:\n${String(o.marketing).slice(0,3000)}`;
-function parseGr(t,fb){
- const g=k=>{const m=String(t).match(new RegExp(k+':\\s*([\\s\\S]*?)(?=\\n[A-Z]{4,}:|$)'));return m?m[1].replace(/\*\*/g,'').trim():''};
- const pr=parseFloat((g('PRICE').match(/[\d.]+/)||[])[0]);
- return {title:g('TITLE')||fb,sub:g('SUBTITLE'),bullets:g('BULLETS').split('|').map(x=>x.trim()).filter(Boolean).slice(0,3),price:pr>0?pr:9.99,desc:g('DESCRIPTION')||String(t)};
+
+function toast(message, type = "success") {
+  const colors = {
+    success: "bg-emerald-500/15 text-emerald-300 border-emerald-500/30",
+    error: "bg-rose-500/15 text-rose-300 border-rose-500/30",
+    info: "bg-sky-500/15 text-sky-300 border-sky-500/30"
+  };
+  const el = $("toast");
+  el.className = `fixed bottom-5 right-5 z-[70] max-w-sm px-4 py-3 rounded-xl border text-sm fade-in ${colors[type]}`;
+  el.textContent = message;
+  el.classList.remove("hidden");
+  setTimeout(() => el.classList.add("hidden"), 3500);
 }
-const gFor=a=>a.gr||{title:a.title,sub:'',bullets:[],price:'',desc:a.marketing||''};
-const OPEN={},COV={};
-const dlb=(n,b)=>{const u=URL.createObjectURL(b);const l=document.createElement('a');l.href=u;l.download=n;document.body.append(l);l.click();l.remove();setTimeout(()=>URL.revokeObjectURL(u),3000)};
-function wrapT(x,t,w){const ws=String(t).split(/\s+/);const L=[];let c='';ws.forEach(q=>{const n=c?c+' '+q:q;if(x.measureText(n).width>w&&c){L.push(c);c=q}else c=n});if(c)L.push(c);return L}
-function coverCanvas(a){
- const g=gFor(a);const c=document.createElement('canvas');c.width=1280;c.height=720;const x=c.getContext('2d');
- x.fillStyle='#1E3A5F';x.fillRect(0,0,1280,720);
- x.fillStyle='#B8892B';x.fillRect(70,70,140,8);x.fillRect(0,700,1280,20);
- x.textBaseline='top';x.fillStyle='#fff';
- let sz=88,L;for(;;){x.font='bold '+sz+'px Georgia,serif';L=wrapT(x,g.title,1140);if(L.length<=3||sz<=46)break;sz-=6}
- let y=110;L.forEach(l=>{x.fillText(l,70,y);y+=sz*1.15});y+=14;
- if(g.sub){x.fillStyle='#d8c28a';x.font='italic 36px Georgia,serif';wrapT(x,g.sub,1140).slice(0,2).forEach(l=>{x.fillText(l,70,y);y+=46})}
- y+=22;x.fillStyle='#fff';x.font='30px system-ui,sans-serif';
- (g.bullets||[]).slice(0,3).forEach(b=>{x.fillText('\u2022  '+b,70,y);y+=44});
- x.fillStyle='#B8892B';x.font='bold 24px system-ui,sans-serif';x.fillText('JOY CORPORATION',70,652);
- return c;
+
+function getApiKey() {
+  return localStorage.getItem(STORE_KEYS.key) || "";
 }
-function coverUrl(a){const k=a.id+'|'+gFor(a).title;if(!COV[k])COV[k]=coverCanvas(a).toDataURL('image/jpeg',0.85);return COV[k]}
-async function pdfLib(){if(window.jspdf)return window.jspdf;await new Promise((ok,no)=>{const s=document.createElement('script');s.src='https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js';s.onload=ok;s.onerror=()=>no(new Error('Gagal memuat pembuat PDF. Periksa internet lalu coba lagi.'));document.head.append(s)});return window.jspdf}
-const cl=t=>String(t||'').replace(/\u2022/g,'-').replace(/[\u2018\u2019]/g,"'").replace(/[\u201C\u201D]/g,'"').replace(/[\u2013\u2014]/g,'-').replace(/\u2026/g,'...').replace(/\*\*/g,'').replace(/[^\x09\x0A\x20-\xFF]/g,'');
-async function makePdf(a){
- const {jsPDF}=await pdfLib();const d=new jsPDF({unit:'pt',format:'a4'});const g=gFor(a);
- const W=595,H=842,M=54,MW=W-2*M;
- d.setFillColor(30,58,95);d.rect(0,0,W,H,'F');
- d.setTextColor(255,255,255);d.setFont('times','bold');d.setFontSize(32);
- let y=220;d.splitTextToSize(cl(g.title),MW).forEach(l=>{d.text(l,M,y);y+=40});
- if(g.sub){d.setFont('times','italic');d.setFontSize(16);d.setTextColor(216,194,138);y+=10;d.splitTextToSize(cl(g.sub),MW).forEach(l=>{d.text(l,M,y);y+=22})}
- d.setFont('helvetica','bold');d.setFontSize(12);d.setTextColor(184,137,43);d.text('JOY CORPORATION',M,H-60);
- d.addPage();d.setTextColor(31,42,51);y=M;
- cl(a.final||a.produk).split('\n').forEach(raw=>{
-  let t=raw.trim();const h=/^#{1,3}\s/.test(t);
-  if(h){t=t.replace(/^#{1,3}\s+/,'');d.setFont('helvetica','bold');d.setFontSize(15);y+=8}
-  else{d.setFont('helvetica','normal');d.setFontSize(11);t=t.replace(/^[*\-]\s+/,'- ')}
-  if(!t){y+=8;return}
-  d.splitTextToSize(t,MW).forEach(l=>{if(y>H-M){d.addPage();y=M}d.text(l,M,y);y+=h?20:15});
-  if(h)y+=2;
- });
- return d.output('blob');
+
+function getModel() {
+  return localStorage.getItem(STORE_KEYS.model) || "gemini-2.0-flash";
 }
-function pdfBtn(a){const b=el('button','btn sm','Produk (PDF)');b.onclick=async()=>{b.disabled=true;b.textContent='Membuat PDF...';try{dlb(slug(a.title)+'.pdf',await makePdf(a))}catch(e){alert(e.message)}b.disabled=false;b.textContent='Produk (PDF)'};return b}
-function covBtn(a){const b=el('button','btn sm','Sampul (.png)');b.onclick=()=>coverCanvas(a).toBlob(x=>dlb(slug(a.title)+'-cover.png',x),'image/png');return b}
-function fld(p,lbl,val){p.append(el('div','mut',lbl));p.append(el('div','pre',val));const b=el('button','btn alt sm','Salin');b.onclick=()=>copy(String(val));p.append(b)}
-function aset(m){
- m.append(el('h3',null,'Aset Produk Jadi'));
- if(!S.assets.length)m.append(el('div','mut','Belum ada aset. Buat lewat tab Request.'));
- else{const all=el('button','btn alt sm','Unduh semua aset (.txt)');all.onclick=()=>dlf('joy-semua-aset.txt',S.assets.map(pkgTxt).join('\n\n\n##########\n\n\n'));m.append(all)}
- S.assets.forEach(a=>{
-  const g=gFor(a);const c=el('div','card');
-  const im=el('img');im.src=coverUrl(a);im.alt='Sampul produk';im.style.cssText='width:100%;border-radius:8px;display:block;margin-bottom:8px';c.append(im);
-  c.append(el('b',null,g.title));
-  const meta=el('div','mut','Dibuat '+a.date+' | Skor QA '+a.skor+'/10 ');
-  meta.append(el('span','tag'+(a.ok?' ok':''),a.ok?'Disetujui CEO':'Menunggu persetujuan'));
-  if(a.link){meta.append(document.createTextNode(' '));meta.append(el('span','tag ok','Sudah dijual'))}
-  c.append(meta);
-  const bar=el('div','row');bar.style.margin='8px 0';
-  [['view','Lihat'],['dl','Download'],['gr','Gumroad']].forEach(([k,l])=>{const b=el('button','btn sm'+(OPEN[a.id]===k?'':' alt'),l);b.onclick=()=>{OPEN[a.id]=OPEN[a.id]===k?null:k;draw()};bar.append(b)});
-  c.append(bar);
-  const o=OPEN[a.id];const p=el('div');
-  if(o==='view'){secs(a).forEach(([t,x],i)=>{const d=el('details');if(i===0)d.open=true;d.append(el('summary',null,t));d.append(el('div','pre',x));const cb=el('button','btn alt sm','Salin');cb.onclick=()=>copy(x);d.append(cb);p.append(d)})}
-  if(o==='dl'){
-   p.append(el('div','mut','Pilih yang mau diunduh:'));const r=el('div','row');
-   const d1=el('button','btn sm','Paket lengkap (.html)');d1.onclick=()=>dlf(slug(a.title)+'.html',pkgHtml(a),'text/html;charset=utf-8');
-   const d2=el('button','btn sm','Paket lengkap (.txt)');d2.onclick=()=>dlf(slug(a.title)+'.txt',pkgTxt(a));
-   const d3=el('button','btn sm','Produk final (.txt)');d3.onclick=()=>dlf(slug(a.title)+'-produk-final.txt',a.final||a.produk);
-   r.append(covBtn(a),pdfBtn(a),d1,d2,d3);p.append(r);
+
+function buildNav() {
+  const nav = $("divisionNav");
+  nav.innerHTML = `
+    <button onclick="showView('dashboard')" class="w-full flex items-center gap-3 px-3 py-3 rounded-xl hover:bg-panel2 transition text-sm ${currentDivision === 'dashboard' ? 'bg-panel2' : ''}">
+      <span>📊</span><span class="font-medium">Dashboard</span>
+    </button>
+    <div class="px-3 pt-4 pb-2 text-[10px] font-bold tracking-widest text-slate-500">DIVISI</div>
+  `;
+  Object.entries(DIVISIONS).forEach(([id, d]) => {
+    nav.innerHTML += `
+      <button onclick="selectDivision('${id}')" class="w-full flex items-center gap-3 px-3 py-3 rounded-xl hover:bg-panel2 transition text-sm ${currentDivision === id ? 'bg-panel2' : ''}">
+        <span>${d.icon}</span>
+        <span class="font-medium flex-1 text-left">${d.name}</span>
+        <span class="w-2 h-2 rounded-full bg-emerald-400 pulse-dot"></span>
+      </button>
+    `;
+  });
+}
+
+function showView(view) {
+  document.querySelectorAll(".view").forEach(v => v.classList.add("hidden"));
+  $(`view-${view}`).classList.remove("hidden");
+  if (view === "dashboard") {
+    $("headerTitle").textContent = "Dashboard";
+    $("headerSubtitle").textContent = "Pusat kendali operasional JOY CORPORATION";
+    currentDivision = "dashboard";
   }
-  if(o==='gr'){
-   p.append(el('div','mut','Paket siap tempel ke Gumroad:'));
-   fld(p,'Judul',g.title);fld(p,'Harga (USD)',String(g.price||''));fld(p,'Deskripsi',g.desc||'');
-   const r=el('div','row');r.style.margin='8px 0';r.append(covBtn(a),pdfBtn(a));p.append(r);
-   const ln=el('a','btn','Buka Gumroad (produk baru)');ln.href='https://gumroad.com/products/new';ln.target='_blank';ln.rel='noopener';ln.style.cssText='display:inline-block;text-decoration:none';p.append(ln);
-   p.append(el('div','mut','Langkah: 1) Salin judul, harga, deskripsi. 2) Unduh sampul dan PDF. 3) Di Gumroad tempel semuanya, unggah PDF dan sampul, lalu Publish. 4) Kembali ke sini dan isi link toko. Unggah ke Gumroad masih manual, sekitar 2 menit.'));
+  if (view === "finance") {
+    $("headerTitle").textContent = "Dashboard Keuangan";
+    $("headerSubtitle").textContent = "Pemasukan, pengeluaran, produk, dan pesanan";
+    renderFinance();
   }
-  c.append(p);
-  if(a.link)c.append(el('div','mut','Dijual di: '+a.link));
-  const lk=el('button','btn alt sm',a.link?'Ubah link toko':'Sudah dijual? Isi link');lk.onclick=()=>{const v=prompt('Tempel link produk di Gumroad/Etsy (kosongkan untuk menghapus):',a.link||'');if(v===null)return;a.link=v.trim();logAdd('Pemasaran & Penjualan',a.link?'Link toko diisi untuk: '+a.title:'Link toko dihapus: '+a.title);save();draw()};c.append(lk);
-  const row=el('div','row');const ap=el('button','btn alt sm',a.ok?'Batal setuju':'Setujui');ap.onclick=()=>{a.ok=!a.ok;logAdd('CEO',(a.ok?'Menyetujui: ':'Membatalkan persetujuan: ')+a.title);save();draw()};
-  const del=el('button','btn alt sm','Hapus');del.onclick=()=>{if(confirm('Hapus aset ini?')){S.assets=S.assets.filter(x=>x!==a);save();draw()}};row.append(ap,del);c.append(row);m.append(c)});
+  if (view === "cs") {
+    $("headerTitle").textContent = "Customer Service";
+    $("headerSubtitle").textContent = "Portal request dan antrean produksi";
+    renderOrders();
+  }
+  if (view === "settings") {
+    $("headerTitle").textContent = "Settings";
+    $("headerSubtitle").textContent = "Konfigurasi integrasi Gemini API";
+    $("geminiKey").value = getApiKey();
+    $("geminiModel").value = getModel();
+  }
+  buildNav();
+  closeSidebar();
 }
-const tm=t=>new Date(t).toLocaleString('id-ID');
-function logTab(m){
- m.append(el('h3',null,'Log Pergerakan Agency'));
- const r=el('div','row');
- const rf=el('button','btn alt sm','Muat ulang');rf.onclick=draw;
- const dl=el('button','btn alt sm','Unduh log (.txt)');dl.onclick=()=>dlf('joy-log.txt',S.log.map(x=>tm(x.t)+' | '+x.w+' | '+x.m).join('\n'));
- const cx=el('button','btn alt sm','Hapus log');cx.onclick=()=>{if(confirm('Hapus seluruh log?')){S.log=[];save();draw()}};
- r.append(rf,dl,cx);m.append(r);
- if(!S.log.length)m.append(el('div','mut','Belum ada aktivitas. Log mencatat kerja tiap divisi, terbaru di atas.'));
- S.log.slice().reverse().slice(0,150).forEach(x=>{const c=el('div','card');c.style.cssText='padding:8px 12px;margin-top:8px';c.append(el('div','mut',tm(x.t)+' | '+x.w),el('div',null,x.m));m.append(c)});
+
+function selectDivision(id) {
+  currentDivision = id;
+  const d = DIVISIONS[id];
+  showView("workspace");
+  $("headerTitle").textContent = d.name;
+  $("headerSubtitle").textContent = d.desc;
+  $("workspaceIcon").textContent = d.icon;
+  $("workspaceTitle").textContent = `@${id}`;
+  $("workspaceDesc").textContent = d.desc;
+  $("rolePreview").textContent = d.system;
+  $("workspaceStatus").innerHTML = `<span class="w-2 h-2 rounded-full bg-emerald-400 pulse-dot inline-block mr-1"></span> Online / Otomatis`;
+  renderHistory();
 }
-// ---- keuangan
-function uang(m){
- m.append(el('h3',null,'Keuangan'));
- m.append(el('div','mut','Catat penjualan dari dasbor Gumroad/Etsy. Pembayaran dikirim platform ke rekening Anda; aplikasi ini hanya pencatat.'));
- const tot=S.sales.reduce((s,x)=>s+x.amt,0);const t=el('div','card');t.append(el('b',null,'Total tercatat: $'+tot.toFixed(2)+' ('+S.sales.length+' penjualan)'));m.append(t);
- const c=el('div','card');const p=el('input');p.placeholder='Nama produk';const a=el('input');a.placeholder='Jumlah USD (mis. 9.99)';a.inputMode='decimal';
- const pf=el('select');['Gumroad','Etsy','Lemon Squeezy','Lainnya'].forEach(x=>pf.append(new Option(x,x)));
- const b=el('button','btn','Catat penjualan');c.append(p,a,pf,b);m.append(c);
- b.onclick=()=>{const v=parseFloat(a.value.replace(',','.'));if(!p.value.trim()||!(v>0))return alert('Isi nama produk dan jumlah USD.');S.sales.unshift({p:p.value.trim(),amt:v,pf:pf.value,d:new Date().toLocaleDateString('id-ID')});logAdd('Finance','Penjualan dicatat: '+p.value.trim()+' $'+v.toFixed(2)+' ('+pf.value+')');save();draw()};
- S.sales.forEach(x=>{const r=el('div','card');r.append(el('b',null,x.p+' | $'+x.amt.toFixed(2)),el('div','mut',x.pf+' | '+x.d));const d=el('button','btn alt sm','Hapus');d.onclick=()=>{S.sales=S.sales.filter(y=>y!==x);save();draw()};r.append(d);m.append(r)});
+
+function toggleSidebar() {
+  $("sidebar").classList.toggle("-translate-x-full");
+  $("sidebarOverlay").classList.toggle("hidden");
 }
-// ---- setelan
-function setelan(m){
- m.append(el('h3',null,'Setelan'));
- const c=el('div','card');c.append(el('b',null,'Kunci API'));
- c.append(el('div','mut','Kunci yang "Sedang dipakai" menjalankan semua divisi. Kunci hanya tersimpan di HP ini.'));
- if(!S.keys.length)c.append(el('div','mut','Belum ada kunci. Tambahkan di bawah.'));
- const LBL={ok:'Valid',bad:'Tidak valid / kadaluarsa',quota:'Kuota habis',model:'Model salah',net:'Belum bisa dicek','':'Belum dicek'};
- const run=async k=>{const [x,mm]=await cek(k);k.st=x;k.msg=mm;k.chk=new Date().toLocaleString('id-ID');save()};
- S.keys.forEach(k=>{
-  const box=el('div','card');
-  box.append(el('b',null,PV[k.pv].n+' | ****'+k.key.slice(-4)),el('div','mut','Model: '+k.model+(k.pv==='custom'?' | '+k.url:'')));
-  const r0=el('div','mut');r0.append(el('span','tag '+(k.st||''),LBL[k.st||'']));if(k.chk)r0.append(document.createTextNode(' dicek '+k.chk));box.append(r0);
-  if(k.msg)box.append(el('div','mut',k.msg));
-  if(k.id===S.active)box.append(el('b',null,'Sedang dipakai'));
-  const row=el('div','row');
-  const pk=el('button','btn sm','Pakai');pk.onclick=()=>{S.active=k.id;save();draw()};
-  const ck=el('button','btn alt sm','Cek');ck.onclick=async()=>{ck.disabled=true;ck.textContent='Mengecek...';await run(k);draw()};
-  const em=el('button','btn alt sm','Ubah model');em.onclick=async()=>{const v=prompt('Nama model baru untuk kunci ini:',k.model);if(!v||!v.trim())return;k.model=v.trim();k.st='';k.msg='';await run(k);draw()};
-  const dl=el('button','btn alt sm','Hapus');dl.onclick=()=>{if(!confirm('Hapus kunci ini?'))return;S.keys=S.keys.filter(x=>x!==k);if(S.active===k.id)S.active=S.keys[0]?S.keys[0].id:null;save();draw()};
-  row.append(pk,ck,em,dl);box.append(row);c.append(box)});
- if(S.keys.length>1){const all=el('button','btn alt','Cek semua kunci');all.onclick=async()=>{all.disabled=true;all.textContent='Mengecek...';for(const k of S.keys)await run(k);draw()};c.append(all)}
- m.append(c);
- const f=el('div','card');f.append(el('b',null,'Tambah kunci API'));
- const pv=el('select');Object.keys(PV).forEach(x=>pv.append(new Option(PV[x].n,x)));
- const md=el('select');
- const ui=el('input');ui.placeholder='Alamat API, mis. https://api.contoh.com/v1';ui.inputMode='url';
- const mi=el('input');mi.placeholder='Nama model (kosongkan untuk pakai pilihan di atas)';
- const fill=()=>{md.innerHTML='';PV[pv.value].m.forEach(x=>md.append(new Option(x,x)));const c=pv.value==='custom';md.style.display=c?'none':'';ui.style.display=c?'':'none';mi.placeholder=c?'Nama model (wajib)':'Atau ketik nama model sendiri (opsional)'};fill();pv.onchange=fill;
- const ki=el('input');ki.type='password';ki.placeholder='Tempel kunci API di sini';ki.autocomplete='off';
- const ad=el('button','btn','Tambah dan cek');
- ad.onclick=async()=>{const v=ki.value.trim();
-  if(v.length<10)return alert('Kunci terlalu pendek.');
-  if(S.keys.some(x=>x.key===v))return alert('Kunci ini sudah ada.');
-  const model=mi.value.trim()||md.value;
-  if(!model)return alert('Isi nama model.');
-  if(pv.value==='custom'&&!/^https?:\/\//.test(ui.value.trim()))return alert('Isi alamat API yang diawali https://');
-  const k={id:Date.now(),pv:pv.value,key:v,model:model,url:ui.value.trim(),st:'',msg:'',chk:''};
-  ad.disabled=true;ad.textContent='Mengecek...';await run(k);
-  if(k.st!=='ok'&&!confirm(k.msg+'\n\nTetap simpan kunci ini?')){ad.disabled=false;ad.textContent='Tambah dan cek';return}
-  S.keys.push(k);if(!S.active)S.active=k.id;save();draw()};
- f.append(pv,md,ui,mi,ki,ad);m.append(f);
- const p=el('div','card');p.append(el('b',null,'Ganti PIN'));const o=el('input');o.type='password';o.placeholder='PIN lama';const n=el('input');n.type='password';n.placeholder='PIN baru (min. 4 angka)';n.inputMode='numeric';
- const pb=el('button','btn','Ganti PIN');pb.onclick=()=>{if(o.value!==S.pin)return alert('PIN lama salah.');if(n.value.length<4)return alert('PIN baru minimal 4 angka.');S.pin=n.value;save();o.value=n.value='';alert('PIN diganti')};
- p.append(o,n,pb);m.append(p);
- const bk=el('div','card');bk.append(el('b',null,'Cadangan data'),el('div','mut','Berisi aset, penjualan, dan chat. Kunci API dan PIN tidak ikut.'));
- const b1=el('button','btn','Unduh cadangan');b1.onclick=()=>dlf('joy-cadangan-'+Date.now()+'.json',JSON.stringify({assets:S.assets,sales:S.sales,chat:S.chat}),'application/json');
- const fi=el('input');fi.type='file';fi.accept='.json,application/json';
- fi.onchange=()=>{const fl=fi.files[0];if(!fl)return;const rd=new FileReader();rd.onload=()=>{try{const d=JSON.parse(rd.result);if(!Array.isArray(d.assets)||!Array.isArray(d.sales))throw 0;if(!confirm('Timpa data sekarang dengan cadangan ini?'))return;S.assets=d.assets;S.sales=d.sales;S.chat=d.chat||{};save();draw();alert('Data dipulihkan')}catch(e){alert('File cadangan tidak valid.')}};rd.readAsText(fl)};
- bk.append(b1,el('div','mut','Pulihkan dari file cadangan:'),fi);m.append(bk);
+
+function closeSidebar() {
+  if (window.innerWidth < 1024) {
+    $("sidebar").classList.add("-translate-x-full");
+    $("sidebarOverlay").classList.add("hidden");
+  }
 }
-// ---- lock
-function unlock(){if($('#pin').value===S.pin){$('#lock').style.display='none';$('#pin').value='';$('#lerr').textContent=''}else $('#lerr').textContent='PIN salah.'}
-$('#go').onclick=unlock;$('#pin').onkeydown=e=>{if(e.key==='Enter')unlock()};
-nav();draw();
-if('serviceWorker' in navigator&&location.protocol.startsWith('http'))navigator.serviceWorker.register('sw.js').catch(()=>{});
-</script></body></html>
+
+function openSettings() {
+  showView("settings");
+}
+
+function saveSettings() {
+  const key = $("geminiKey").value.trim();
+  const model = $("geminiModel").value.trim() || "gemini-2.0-flash";
+  localStorage.setItem(STORE_KEYS.key, key);
+  localStorage.setItem(STORE_KEYS.model, model);
+  updateKeyStatus();
+  toast("Pengaturan disimpan.");
+}
+
+function clearSettings() {
+  localStorage.removeItem(STORE_KEYS.key);
+  localStorage.removeItem(STORE_KEYS.model);
+  $("geminiKey").value = "";
+  $("geminiModel").value = "gemini-2.0-flash";
+  updateKeyStatus();
+  toast("API Key dihapus.", "info");
+}
+
+function updateKeyStatus() {
+  const has = Boolean(getApiKey());
+  $("apiKeyStatus").textContent = has ? "Ready" : "No Key";
+  $("apiKeyStatus").className = `ml-auto text-[10px] px-2 py-1 rounded-full ${has ? "bg-emerald-500/15 text-emerald-300" : "bg-amber-500/15 text-amber-300"}`;
+}
+
+async function callGemini(systemPrompt, userPrompt) {
+  const apiKey = getApiKey();
+  if (!apiKey) throw new Error("Gemini API Key belum diisi. Buka Settings terlebih dahulu.");
+
+  const model = getModel();
+  const url = `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent`;
+
+  const response = await fetch(url, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "x-goog-api-key": apiKey
+    },
+    body: JSON.stringify({
+      contents: [{ role: "user", parts: [{ text: userPrompt }] }],
+      systemInstruction: { parts: [{ text: systemPrompt }] },
+      generationConfig: { temperature: 0.7, maxOutputTokens: 2048 }
+    })
+  });
+
+  const data = await response.json();
+  if (!response.ok) {
+    throw new Error(data?.error?.message || `HTTP ${response.status}`);
+  }
+
+  const text = data?.candidates?.[0]?.content?.parts?.map(p => p.text).join("\n") || "";
+  if (!text) throw new Error("Gemini tidak mengembalikan teks.");
+  return text;
+}
+
+async function runDivisionAI(customInput = null) {
+  if (isRunning) return;
+  const input = customInput ?? $("promptInput").value.trim();
+  if (!input) { toast("Tulis instruksi terlebih dahulu.", "error"); return; }
+
+  isRunning = true;
+  $("runBtn").textContent = "Memproses...";
+  $("runBtn").disabled = true;
+  $("workspaceOutput").innerHTML = `<div class="typing text-sm text-slate-400">${DIVISIONS[currentDivision].name} sedang bekerja...</div>`;
+
+  try {
+    const result = await callGemini(DIVISIONS[currentDivision].system, input);
+    $("workspaceOutput").innerHTML = `<div class="prose-ai fade-in">${escapeHTML(result)}</div>`;
+    addHistory(currentDivision, input, result);
+    toast(`${DIVISIONS[currentDivision].name} selesai.`);
+  } catch (err) {
+    $("workspaceOutput").innerHTML = `<div class="text-sm text-rose-300">Error: ${escapeHTML(err.message)}</div>`;
+    toast(err.message, "error");
+  } finally {
+    isRunning = false;
+    $("runBtn").textContent = "Kirim ke AI";
+    $("runBtn").disabled = false;
+    renderDashboard();
+  }
+}
+
+function clearWorkspace() {
+  $("promptInput").value = "";
+  $("workspaceOutput").innerHTML = `<div class="text-sm text-slate-500">Hasil kerja AI akan muncul di sini.</div>`;
+}
+
+function escapeHTML(text) {
+  return String(text)
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;");
+}
+
+function addHistory(division, input, output) {
+  const history = loadJSON(STORE_KEYS.history, []);
+  history.unshift({
+    division,
+    input,
+    output,
+    time: new Date().toISOString()
+  });
+  saveJSON(STORE_KEYS.history, history.slice(0, 100));
+  renderHistory();
+}
+
+function renderHistory() {
+  const history = loadJSON(STORE_KEYS.history, []).filter(h => h.division === currentDivision);
+  const list = $("historyList");
+  if (!list) return;
+  if (!history.length) {
+    list.innerHTML = `<div class="text-slate-500">Belum ada riwayat.</div>`;
+    return;
+  }
+  list.innerHTML = history.slice(0, 20).map(h => `
+    <div class="rounded-lg bg-[#080d16] border border-line p-3">
+      <div class="font-semibold text-slate-200">${new Date(h.time).toLocaleString("id-ID")}</div>
+      <div class="mt-1 text-slate-400 line-clamp-2">${escapeHTML(h.input.slice(0, 120))}</div>
+    </div>
+  `).join("");
+}
+
+async function runAutoCycle() {
+  if (isRunning) return;
+  const idea = $("promptInput").value.trim() || "Riset dan rancang satu peluang produk digital baru untuk UMKM Indonesia.";
+  const chain = ["purchasing", "business_development", "finance", "production", "quality_control"];
+  isRunning = true;
+
+  selectDivision("purchasing");
+  $("promptInput").value = idea;
+  $("workspaceOutput").innerHTML = `<div class="typing text-sm text-slate-400">Siklus otomatis dimulai...</div>`;
+
+  let carry = `Ide awal:\n${idea}`;
+  try {
+    for (const id of chain) {
+      currentDivision = id;
+      selectDivision(id);
+      $("promptInput").value = carry;
+      $("workspaceOutput").innerHTML = `<div class="typing text-sm text-slate-400">${DIVISIONS[id].name} sedang memproses tahap siklus...</div>`;
+      const result = await callGemini(
+        DIVISIONS[id].system,
+        `${carry}\n\nTugas: lanjutkan pekerjaan sesuai peran ${DIVISIONS[id].name}. Berikan output yang jelas, terstruktur, dan dapat dieksekusi.`
+      );
+      $("workspaceOutput").innerHTML = `<div class="prose-ai fade-in">${escapeHTML(result)}</div>`;
+      addHistory(id, carry, result);
+      carry = `Hasil sebelumnya:\n${result}\n\nIde awal:\n${idea}`;
+      await new Promise(r => setTimeout(r, 500));
+    }
+    toast("Siklus otomatis Riset → QC selesai.");
+  } catch (err) {
+    $("workspaceOutput").innerHTML = `<div class="text-sm text-rose-300">Siklus berhenti: ${escapeHTML(err.message)}</div>`;
+    toast(err.message, "error");
+  } finally {
+    isRunning = false;
+    renderDashboard();
+  }
+}
+
+function addFinanceRecord() {
+  const desc = $("financeDesc").value.trim();
+  const amount = parseFloat($("financeAmount").value);
+  const type = $("financeType").value;
+  if (!desc || isNaN(amount) || amount <= 0) { toast("Lengkapi deskripsi dan jumlah.", "error"); return; }
+
+  const records = loadJSON(STORE_KEYS.finance, []);
+  records.unshift({ id: Date.now(), desc, amount, type, time: new Date().toISOString() });
+  saveJSON(STORE_KEYS.finance, records);
+  $("financeDesc").value = "";
+  $("financeAmount").value = "";
+  renderFinance();
+  toast("Transaksi disimpan.");
+}
+
+function renderFinance() {
+  const records = loadJSON(STORE_KEYS.finance, []);
+  const orders = loadJSON(STORE_KEYS.orders, []);
+  const income = records.filter(r => r.type === "income").reduce((s, r) => s + r.amount, 0);
+  const expense = records.filter(r => r.type === "expense").reduce((s, r) => s + r.amount, 0);
+  const profit = income - expense;
+
+  $("financeIncome").textContent = `$${income.toLocaleString("en-US", { maximumFractionDigits: 2 })}`;
+  $("financeExpense").textContent = `$${expense.toLocaleString("en-US", { maximumFractionDigits: 2 })}`;
+  $("financeProfit").textContent = `$${profit.toLocaleString("en-US", { maximumFractionDigits: 2 })}`;
+
+  $("financeList").innerHTML = records.length ? records.map(r => `
+    <div class="flex items-center gap-3 rounded-xl bg-[#080d16] border border-line p-3">
+      <div class="w-9 h-9 rounded-lg grid place-items-center ${r.type === 'income' ? 'bg-emerald-500/15 text-emerald-300' : 'bg-rose-500/15 text-rose-300'}">${r.type === 'income' ? '↑' : '↓'}</div>
+      <div class="min-w-0 flex-1">
+        <div class="text-sm font-semibold text-white truncate">${escapeHTML(r.desc)}</div>
+        <div class="text-[11px] text-slate-500">${new Date(r.time).toLocaleString("id-ID")}</div>
+      </div>
+      <div class="text-sm font-bold ${r.type === 'income' ? 'text-emerald-400' : 'text-rose-400'}">${r.type === 'income' ? '+' : '-'}$${r.amount.toFixed(2)}</div>
+    </div>
+  `).join("") : `<div class="text-sm text-slate-500">Belum ada transaksi.</div>`;
+
+  const ready = orders.filter(o => o.status === "ready");
+  $("readyProducts").innerHTML = ready.length ? ready.map(o => `
+    <div class="rounded-xl bg-[#080d16] border border-line p-4">
+      <div class="font-semibold text-white">${escapeHTML(o.productName)}</div>
+      <div class="text-xs text-slate-400 mt-1">Pelanggan: ${escapeHTML(o.customerName)}</div>
+      <div class="mt-3 inline-flex text-[11px] px-2 py-1 rounded-full bg-emerald-500/15 text-emerald-300 border border-emerald-500/20">Siap Jual</div>
+    </div>
+  `).join("") : `<div class="text-sm text-slate-500">Belum ada produk siap jual.</div>`;
+
+  renderDashboard();
+}
+
+function submitCustomerRequest() {
+  const customerName = $("customerName").value.trim();
+  const customerEmail = $("customerEmail").value.trim();
+  const productName = $("productName").value.trim();
+  const notes = $("customerNotes").value.trim();
+  const budget = parseFloat($("customerBudget").value) || 0;
+
+  if (!customerName || !productName || !notes) {
+    toast("Nama, produk, dan detail wajib diisi.", "error");
+    return;
+  }
+
+  const orders = loadJSON(STORE_KEYS.orders, []);
+  orders.unshift({
+    id: Date.now(),
+    customerName,
+    customerEmail,
+    productName,
+    notes,
+    budget,
+    status: "production",
+    time: new Date().toISOString()
+  });
+  saveJSON(STORE_KEYS.orders, orders);
+
+  $("customerName").value = "";
+  $("customerEmail").value = "";
+  $("productName").value = "";
+  $("customerNotes").value = "";
+  $("customerBudget").value = "";
+
+  renderOrders();
+  toast("Request masuk antrean produksi.");
+}
+
+function updateOrderStatus(id, status) {
+  const orders = loadJSON(STORE_KEYS.orders, []);
+  const order = orders.find(o => o.id === id);
+  if (order) {
+    order.status = status;
+    saveJSON(STORE_KEYS.orders, orders);
+    renderOrders();
+    toast(`Status pesanan diubah menjadi ${status}.`);
+  }
+}
+
+function renderOrders() {
+  const orders = loadJSON(STORE_KEYS.orders, []);
+  const labels = {
+    production: ["Dalam Produksi", "bg-amber-500/15 text-amber-300 border-amber-500/20"],
+    ready: ["Siap Jual", "bg-emerald-500/15 text-emerald-300 border-emerald-500/20"],
+    completed: ["Selesai", "bg-slate-500/15 text-slate-300 border-slate-500/20"]
+  };
+
+  $("productionQueue").innerHTML = orders.length ? orders.map(o => `
+    <div class="rounded-xl bg-[#080d16] border border-line p-4">
+      <div class="flex items-start justify-between gap-3">
+        <div class="min-w-0">
+          <div class="font-semibold text-white truncate">${escapeHTML(o.productName)}</div>
+          <div class="text-xs text-slate-400">${escapeHTML(o.customerName)} • ${escapeHTML(o.customerEmail || "email tidak diisi")}</div>
+        </div>
+        <span class="text-[10px] px-2 py-1 rounded-full border ${labels[o.status][1]}">${labels[o.status][0]}</span>
+      </div>
+      <p class="mt-2 text-xs text-slate-400 line-clamp-3">${escapeHTML(o.notes)}</p>
+      <div class="mt-3 flex flex-wrap items-center gap-2">
+        <span class="text-xs text-slate-300 font-semibold">Budget: $${o.budget.toFixed(2)}</span>
+        <button onclick="updateOrderStatus(${o.id}, 'ready')" class="ml-auto text-[11px] px-3 py-1.5 rounded-lg bg-emerald-500/15 text-emerald-300 border border-emerald-500/20 hover:bg-emerald-500/25">Tandai Siap Jual</button>
+        <button onclick="updateOrderStatus(${o.id}, 'completed')" class="text-[11px] px-3 py-1.5 rounded-lg bg-panel2 text-slate-300 border border-line hover:bg-line">Selesai</button>
+      </div>
+    </div>
+  `).join("") : `<div class="text-sm text-slate-500">Belum ada pesanan.</div>`;
+
+  renderDashboard();
+}
+
+function renderDashboard() {
+  const records = loadJSON(STORE_KEYS.finance, []);
+  const orders = loadJSON(STORE_KEYS.orders, []);
+  const income = records.filter(r => r.type === "income").reduce((s, r) => s + r.amount, 0);
+  const expense = records.filter(r => r.type === "expense").reduce((s, r) => s + r.amount, 0);
+  const ready = orders.filter(o => o.status === "ready").length;
+  const active = orders.filter(o => o.status === "production").length;
+
+  $("statIncome").textContent = `$${income.toLocaleString("en-US", { maximumFractionDigits: 2 })}`;
+  $("statExpense").textContent = `$${expense.toLocaleString("en-US", { maximumFractionDigits: 2 })}`;
+  $("statProducts").textContent = ready;
+  $("statOrders").textContent = active;
+
+  $("divisionStatusGrid").innerHTML = Object.entries(DIVISIONS).map(([id, d]) => `
+    <div class="flex items-center gap-3 rounded-xl bg-[#080d16] border border-line p-3">
+      <div class="w-10 h-10 rounded-xl bg-panel2 border border-line grid place-items-center">${d.icon}</div>
+      <div class="min-w-0 flex-1">
+        <div class="text-sm font-semibold text-white truncate">@${id}</div>
+        <div class="text-[11px] text-slate-500 truncate">${d.desc}</div>
+      </div>
+      <span class="flex items-center gap-1 text-[10px] text-emerald-300">
+        <span class="w-2 h-2 rounded-full bg-emerald-400 pulse-dot"></span> Online
+      </span>
+    </div>
+  `).join("");
+
+  const history = loadJSON(STORE_KEYS.history, []);
+  $("activityFeed").innerHTML = history.length ? history.slice(0, 8).map(h => `
+    <div class="rounded-xl bg-[#080d16] border border-line p-3">
+      <div class="flex items-center justify-between gap-2">
+        <span class="text-xs font-bold ${DIVISIONS[h.division]?.color || 'text-slate-300'}">@${h.division}</span>
+        <span class="text-[10px] text-slate-500">${new Date(h.time).toLocaleTimeString("id-ID")}</span>
+      </div>
+      <p class="mt-1 text-xs text-slate-400 line-clamp-2">${escapeHTML(h.input.slice(0, 110))}</p>
+    </div>
+  `).join("") : `<div class="text-sm text-slate-500">Belum ada aktivitas AI.</div>`;
+}
+
+document.addEventListener("DOMContentLoaded", () => {
+  buildNav();
+  showView("dashboard");
+  updateKeyStatus();
+  renderFinance();
+  renderOrders();
+});
+</script>
+</body>
+</html>
